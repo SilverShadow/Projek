@@ -13,18 +13,26 @@ TestCodedPacketMatrix_gf = gf(zeros(pktSize,32,3),8);
 thershold1 = 10;
 threshold2 = 20;
 
-n1 = Node_H(10, 'num1');
-n2 = Node_H(15, 'hello');
+n1 = Node_H('num1', 10);
+n2 = Node_H('hello', 20);
 s1 = SourceNode_H('source1', 32, pktSize);
+r1 = ReceiverNode_H('receiver1', 32, pktSize);
 
 s1.sendFile('smiley.jpg');
  
-for i =1:32
-     x = s1.sendPacket();
-     TestCodeVectorMatrix_gf(i,:,1) = x.CodeVector_c;
-     TestCodedPacketMatrix_gf(:,i,1) = x.CodedData_e;
+for i = 1:32
+    x = s1.sendPacket();
+    r1.receivePacket(x);
 end
-s1.receivePacket(ACKPacket);
+
+
+% 
+% for i =1:32
+%      x = s1.sendPacket();
+%      TestCodeVectorMatrix_gf(i,:,1) = x.CodeVector_c;
+%      TestCodedPacketMatrix_gf(:,i,1) = x.CodedData_e;
+% end
+% s1.receivePacket(ACKPacket);
 % for i =1:32
 %      x = s1.sendPacket();
 %      TestCodeVectorMatrix_gf(i,:,2) = x.CodeVector_c;
@@ -36,15 +44,15 @@ s1.receivePacket(ACKPacket);
 %      TestCodeVectorMatrix_gf(i,:,3) = x.CodeVector_c;
 %      TestCodedPacketMatrix_gf(:,i,3) = x.CodedData_e;
 % end
-
-for tel=1:1
-    tempTCVM = TestCodeVectorMatrix_gf(:,:,tel);
-    tempTCPM = TestCodedPacketMatrix_gf(:,:,tel);
-    DecodedGMatrix = (tempTCVM\(tempTCPM'))';
-    fwid2 = fopen('smiley2.jpg', 'a+');
-    fwrite(fwid2, DecodedGMatrix.x);
-    fclose(fwid2);
-end
+% % 
+% for tel=1:1
+%     tempTCVM = r1.CodeVectorMatrix_gf %TestCodeVectorMatrix_gf(:,:,tel);
+%     tempTCPM =  r1.CodedPacketMatrix_gf%TestCodedPacketMatrix_gf(:,:,tel);
+%     DecodedGMatrix = (tempTCVM\(tempTCPM'))';
+%     fwid2 = fopen('smiley2.jpg', 'a+');
+%     fwrite(fwid2, DecodedGMatrix.x);
+%     fclose(fwid2);
+% end
  
 % 
 % 

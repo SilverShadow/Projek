@@ -4,15 +4,14 @@ classdef SourceNode_H < handle
     
     properties(GetAccess='public', SetAccess='private')
         generationSize; %num packets in generation
-        packetSize; %size of the packets in Bytes
+        packetSize;     %size of the packets in Bytes
         NodeID;
         OUT = 0;
         counter1 = 0; 
         counter2 = 1;
-        seed = 5;
-        seedCodeV = 3; %seed for the coding vector
+        seedCodeV = 3;  %seed for the coding vector
         
-        GF_Field = 8; % Galois field2^8
+        GF_Field = 8;   % Galois field2^8
         b = 2;
         genCounter = 1;
         numGenerations;
@@ -58,13 +57,10 @@ classdef SourceNode_H < handle
             end
             
             %create generation matrix and put in field GF8
-            
-                GenerationMatrix = obj.chunk;
-                obj.GenerationMatrix_gf = gf(GenerationMatrix,obj.GF_Field); % makes galois field of generation matrix 
+            GenerationMatrix = obj.chunk;
+            obj.GenerationMatrix_gf = gf(GenerationMatrix,obj.GF_Field); % makes galois field of generation matrix 
                 
         end
-        
-        
         
         function codedPacket = sendPacket(obj)
             
@@ -79,31 +75,41 @@ classdef SourceNode_H < handle
             for i = 1:obj.generationSize
                 codedData_gf(:,1) = codedData_gf(:,1) + codeVector_gf(1,i)* obj.GenerationMatrix_gf(:,i,obj.genCounter);
             end
-            codedPacket = struct('Type', 1, 'GenID', obj.genCounter,'CodeVector_c', codeVector_gf, 'CodedData_e', codedData_gf );
-            disp('encoded a packet');
+            codedPacket = struct('Type', 1, 'GenID', obj.genCounter, 'CodeVector_c', codeVector_gf, 'CodedData_e', codedData_gf );
+            str =[obj.NodeID, ' Encoded a packet']; 
+            disp(str);
+            
         end
-        
-        
         
         function obj = receivePacket(obj, Packet)
             
-            if (Packet.Type ==0)
+            if (Packet.Type == 0)
                 str = [obj.NodeID, ' Received ACK Packet --'];
                 disp(str);
                 disp(Packet);
+                
                 if (obj.genCounter >= obj.numGenerations)
-                    disp('no more generations')
+                    str = [obj.NodeID, ' no more generations'];
+                    disp(str);
                 else
                     obj.genCounter = obj.genCounter +1 ;
                 end
-            elseif (Packet.Type ==3)    
+                
+            elseif (Packet.Type == 1)
+                str = [obj.NodeID, ' Received an Un/Encoded Packet --'];
+                disp(str);
+                disp(Packet); 
+                
+            elseif (Packet.Type == 2)
                 str = [obj.NodeID, ' Received Checksum Packet --'];
                 disp(str);
                 disp(Packet);
+            
             else
-                str = [obj.NodeID, ' Received a Packet --'];
+                str = [obj.NodeID, ' Unknown Packet Type'];
                 disp(str);
                 disp(Packet);
+            
             end
                 
             

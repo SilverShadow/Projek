@@ -15,7 +15,7 @@ classdef Node_H < handle
     
     methods
         
-        function obj = Node_H(thresh, NodeID)
+        function obj = Node_H( NodeID, thresh)
         % class constructor
             obj.timer1 = 0;
             obj.threshold = thresh;
@@ -73,7 +73,6 @@ classdef Node_H < handle
             obj.queueUnVer.enqueue(Packet);
             obj.timer1Active = true;
         end
-        
         
         function obj = sendPacket(obj, Packet)
             str = [obj.NodeID, ' sending packet --', Packet, '--'];
