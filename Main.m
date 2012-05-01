@@ -13,7 +13,7 @@ TestCodedPacketMatrix_gf = gf(zeros(pktSize,32,3),8);
 thershold1 = 10;
 threshold2 = 20;
 
-n1 = Node_H('num1', 10);
+n1 = Node_H('num1', 1);
 n2 = Node_H('hello', 20);
 s1 = SourceNode_H('source1', 32, pktSize);
 r1 = ReceiverNode_H('receiver1', 32, pktSize);
@@ -54,27 +54,12 @@ end
 %     fclose(fwid2);
 % end
  
-% 
-% 
-% for i= 1:60
-%    disp(i);
-%    n1.tick();
-%    n2.tick();
-%    if (i ==5)
-%    n1.receivePacket('pakkie');
-%    end
-%    
-%    if ( i ==7)
-%        n2.receivePacket('random');
-%    end
-%    
-%    if ( i == 8)
-%        n1.receivePacket('vraat');
-%    end
-%    
-%    if ( i == 28)
-%        n2.receivePacket('ewekansig');
-%    end
-%    
-% end
+
+
+for i= 1:60
+   disp(i);
+   
+   
+   
+end
 

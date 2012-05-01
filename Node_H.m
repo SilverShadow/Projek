@@ -3,13 +3,15 @@ classdef Node_H < handle
     %   Detailed explanation goes here
     
     properties(GetAccess='public', SetAccess='private')
-        timer1 = 0;
+        
         threshold;  
         NodeID;
-        PacketStore = 0; % store 1 packet - debug
+        PacketStore  = 0;             % store 1 packet - debug
         timer1Active = false;
         queueUnVer;
-        
+        HavePacket = false;
+        timer1 = 0;
+        NodeState; % 0 for FWD  1 for ENCODE
         
     end
     
@@ -21,21 +23,11 @@ classdef Node_H < handle
             obj.threshold = thresh;
             obj.NodeID = NodeID;
             obj.queueUnVer = Queue(10);
+            obj.NodeState = 0; % FWD
             
         end
                
-        function set.timer1(obj, value) 
-            if (value < 0)
-                error('Property value must be positive')
-            else
-                obj.timer1 = value;
-            end
-        end
-        
-        function t1 = get.timer1(obj)
-            t1 = obj.timer1;
-        end
-        
+               
         function obj = tick(obj)
             
             if (obj.timer1Active)
@@ -51,7 +43,7 @@ classdef Node_H < handle
                         pakkieNode = obj.queueUnVer.dequeue();
                         obj.sendPacket(pakkieNode.data);
                     end
-                    
+                    obj.HavePacket = true;
                     %obj.sendPacket(obj.PacketStore); debug 
                     %obj.PacketStore = 0; % clear packetstore debug
                     obj.timer1Active = false;
@@ -67,17 +59,39 @@ classdef Node_H < handle
         end
         
         function obj = receivePacket(obj, Packet)
-            str = [obj.NodeID, ' Received Packet --', Packet,'--'];
-            disp(str);
-            %obj.PacketStore = Packet;% store 1 packet - debug
+                        
+            if (Packet.Type == 0)
+                str = [obj.NodeID, ' Received ACK Packet -----'];
+                disp(str);
+                disp(Packet);
+            elseif (Packet.Type == 1)
+                str = [obj.NodeID, ' Received an Un/Encoded Packet -----'];
+                disp(str);
+                %disp(Packet);    
+            elseif(Packet.Type == 2)
+                str = [obj.NodeID, ' Received Checksum Packet -----'];
+                disp(str);
+                %disp(Packet); %debug
+            else
+                str = [obj.NodeID, ' Received Unknown Packet Type !!!!!'];
+                disp(str);
+                disp(Packet);
+            end
+
             obj.queueUnVer.enqueue(Packet);
-            obj.timer1Active = true;
+            obj.HavePacket = true;
+            
+            %obj.PacketStore = Packet;% store 1 packet - debug
+            %obj.timer1Active = true;
+            
         end
         
-        function obj = sendPacket(obj, Packet)
-            str = [obj.NodeID, ' sending packet --', Packet, '--'];
+        function sPacket = sendPacket(obj)
+            pakkieNode = obj.queueUnVer.dequeue();
+            sPacket = pakkieNode.data;
+            str = [obj.NodeID, ' sending packet >>>>>'];
             disp(str);
-            %pack = Packet;
+            obj.HavePacket = false;
         end
         
     end

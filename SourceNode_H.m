@@ -76,7 +76,7 @@ classdef SourceNode_H < handle
                 codedData_gf(:,1) = codedData_gf(:,1) + codeVector_gf(1,i)* obj.GenerationMatrix_gf(:,i,obj.genCounter);
             end
             codedPacket = struct('Type', 1, 'GenID', obj.genCounter, 'CodeVector_c', codeVector_gf, 'CodedData_e', codedData_gf );
-            str =[obj.NodeID, ' Encoded a packet']; 
+            str =[obj.NodeID, ' Encoded and sending packet >>>>>']; 
             disp(str);
             
         end
@@ -84,7 +84,7 @@ classdef SourceNode_H < handle
         function obj = receivePacket(obj, Packet)
             
             if (Packet.Type == 0)
-                str = [obj.NodeID, ' Received ACK Packet --'];
+                str = [obj.NodeID, ' Received ACK Packet -----'];
                 disp(str);
                 disp(Packet);
                 
@@ -96,12 +96,12 @@ classdef SourceNode_H < handle
                 end
                 
             elseif (Packet.Type == 1)
-                str = [obj.NodeID, ' Received an Un/Encoded Packet --'];
+                str = [obj.NodeID, ' Received an Un/Encoded Packet -----'];
                 disp(str);
                 disp(Packet); 
                 
             elseif (Packet.Type == 2)
-                str = [obj.NodeID, ' Received Checksum Packet --'];
+                str = [obj.NodeID, ' Received Checksum Packet -----'];
                 disp(str);
                 disp(Packet);
             

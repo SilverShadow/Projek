@@ -3,7 +3,7 @@
 clc;
 clear;
 
-pktSize = 1500;
+pktSize = 100;
 genSize = 32;
 
 s1 = SourceNode_H('source1', genSize, pktSize);
@@ -11,7 +11,7 @@ r1 = ReceiverNode_H('receiver1', genSize, pktSize);
 
 s1.sendFile('smiley.jpg');
  
-for i = 1:35
+for i = 1:100
     if (r1.ACK)
         x = r1.sendPacket();
         s1.receivePacket(x);

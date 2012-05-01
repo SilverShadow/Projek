@@ -2,7 +2,7 @@ classdef ReceiverNode_H < handle
     %ReceiverNode_H Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties
+    properties (GetAccess='public', SetAccess='private')
      generationSize;       %num packets in generation
      packetSize;           %size of the packets in Bytes
      NodeID;
@@ -31,11 +31,11 @@ classdef ReceiverNode_H < handle
             if (Packet.GenID == obj.currentGen)
                
                 if (Packet.Type == 0)
-                    str = [obj.NodeID, ' Received ACK Packet --'];
+                    str = [obj.NodeID, ' Received ACK Packet -----'];
                     disp(str);
                     disp(Packet);
                 elseif(Packet.Type == 1)
-                    str = [obj.NodeID, ' Received Un/Encoded Packet --'];
+                    str = [obj.NodeID, ' Received Un/Encoded Packet -----'];
                     disp(str);
                     %disp(Packet); %debug
                     
@@ -67,11 +67,11 @@ classdef ReceiverNode_H < handle
                     end
                    
                 elseif(Packet.Type == 2)
-                    str = [obj.NodeID, ' Received Checksum Packet --'];
+                    str = [obj.NodeID, ' Received Checksum Packet -----'];
                     disp(str);
                     disp(Packet);
                 else
-                    str = [obj.NodeID, ' Unknown Packet Type'];
+                    str = [obj.NodeID, ' Received Unknown Packet Type !!!!!'];
                     disp(str);
                     disp(Packet);
                 end
@@ -101,7 +101,7 @@ classdef ReceiverNode_H < handle
         function sPacket = sendPacket(obj)
             
             if (obj.ACK)% is true
-                str = [obj.NodeID,' Ack packet sent']; 
+                str = [obj.NodeID,' Ack packet sent >>>>>']; 
                 disp(str); 
                 sPacket = struct('Type', 0, 'GenID', (obj.currentGen-1));
                 obj.ACK = false;
