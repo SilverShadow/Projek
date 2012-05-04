@@ -3,22 +3,24 @@ classdef SourceNode_H < handle
     %   Detailed explanation goes here
     
     properties(GetAccess='public', SetAccess='private')
+        NodeID;
         generationSize; %num packets in generation
         packetSize;     %size of the packets in Bytes
-        NodeID;
-        OUT = 0;
+        
+
+        seedCodeV = 3;  %seed for the coding vector
+        GF_Field = 8;   % Galois field2^8
         counter1 = 0; 
         counter2 = 1;
-        seedCodeV = 3;  %seed for the coding vector
-        
-        GF_Field = 8;   % Galois field2^8
-        b = 2;
         genCounter = 1;
+        noMoreGen = false;
+        packetCounter = 0;
+        ACKPacketRCounter = 0;
+        
         numGenerations;
         chunk;
         GenerationMatrix_gf;
         s;
-        
         
     end
     
@@ -64,20 +66,28 @@ classdef SourceNode_H < handle
         
         function codedPacket = sendPacket(obj)
             
-            codeVector = createCodeVector(obj.s, obj.generationSize, obj.GF_Field);
-            codeVector_gf = gf(codeVector,obj.GF_Field);
-            
-            % Coded Data vector e = c(1)*p(1) + c(2)*p(2)....
-            codedData = zeros(obj.packetSize,1);
-            codedData_gf = gf(codedData, obj.GF_Field);
-            
-            % multiply coded vector with each packet and add them together
-            for i = 1:obj.generationSize
-                codedData_gf(:,1) = codedData_gf(:,1) + codeVector_gf(1,i)* obj.GenerationMatrix_gf(:,i,obj.genCounter);
+            if (obj.noMoreGen == false)
+                codeVector = createCodeVector(obj.s, obj.generationSize, obj.GF_Field);
+                codeVector_gf = gf(codeVector,obj.GF_Field);
+
+                % Coded Data vector e = c(1)*p(1) + c(2)*p(2)....
+                codedData = zeros(obj.packetSize,1);
+                codedData_gf = gf(codedData, obj.GF_Field);
+
+                % multiply coded vector with each packet and add them together
+                for i = 1:obj.generationSize
+                    codedData_gf(:,1) = codedData_gf(:,1) + codeVector_gf(1,i)* obj.GenerationMatrix_gf(:,i,obj.genCounter);
+                end
+                codedPacket = struct('Type', 1, 'GenID', obj.genCounter, 'CodeVector_c', codeVector_gf, 'CodedData_e', codedData_gf );
+                str =[obj.NodeID, ' Encoded and sending packet >>>>>']; 
+                disp(str);
+                obj.packetCounter = obj.packetCounter + 1;
+            else
+                %do nothing
+                str =[obj.NodeID, ' Do nothing: no more generations to send.'];
+                disp(str);
+                codedPacket = struct('Type', 99);
             end
-            codedPacket = struct('Type', 1, 'GenID', obj.genCounter, 'CodeVector_c', codeVector_gf, 'CodedData_e', codedData_gf );
-            str =[obj.NodeID, ' Encoded and sending packet >>>>>']; 
-            disp(str);
             
         end
         
@@ -87,10 +97,11 @@ classdef SourceNode_H < handle
                 str = [obj.NodeID, ' Received ACK Packet -----'];
                 disp(str);
                 disp(Packet);
-                
+                obj.ACKPacketRCounter = obj.ACKPacketRCounter +1;
                 if (obj.genCounter >= obj.numGenerations)
-                    str = [obj.NodeID, ' no more generations'];
+                    str = [obj.NodeID, ' No more generations'];
                     disp(str);
+                    obj.noMoreGen = true;
                 else
                     obj.genCounter = obj.genCounter +1 ;
                 end

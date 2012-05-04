@@ -3,15 +3,24 @@ classdef Node_H < handle
     %   Detailed explanation goes here
     
     properties(GetAccess='public', SetAccess='private')
-        
-        threshold;  
         NodeID;
+        threshold; 
         PacketStore  = 0;             % store 1 packet - debug
         timer1Active = false;
         queueUnVer;
+        OUTQueue;
+        ACKQueue;
         HavePacket = false;
         timer1 = 0;
-        NodeState; % 0 for FWD  1 for ENCODE
+        ACK = false;
+        
+        tickCounter = 0;
+        packetRCounter = 0;
+        packetSCounter = 0;
+        droppedPacketCounter = 0;
+        ACKPacketSCounter = 0;
+        ACKPacketRCounter = 0;
+        % delayT = false;
         
     end
     
@@ -23,7 +32,8 @@ classdef Node_H < handle
             obj.threshold = thresh;
             obj.NodeID = NodeID;
             obj.queueUnVer = Queue(10);
-            obj.NodeState = 0; % FWD
+            obj.OUTQueue = Queue(10);
+            obj.ACKQueue = Queue(3);
             
         end
                
@@ -33,16 +43,20 @@ classdef Node_H < handle
             if (obj.timer1Active)
                 
                 obj.timer1 = obj.timer1 + 1;
+              %  obj.delayT = true;
                 
-                if (obj.timer1 >= obj.threshold)
+                if (obj.timer1 >= obj.threshold || obj.queueUnVer.isFull()==true)
                     obj.timer1 = 0;
                     str =[obj.NodeID,' Threshold reached', ' getting packet --']; % ,obj.PacketStore]; debug
                     disp(str);
-                    
-                    for i = 1:obj.queueUnVer.counter
-                        pakkieNode = obj.queueUnVer.dequeue();
-                        obj.sendPacket(pakkieNode.data);
+                    if(obj.queueUnVer.isFull())
+                        disp('Queue was full');
                     end
+                    %for i = 1:obj.queueUnVer.counter
+                        pakkieNode = obj.queueUnVer.dequeue();
+                        %encoding operation
+                        obj.OUTQueue.enqueue(pakkieNode.data);
+                    %end
                     obj.HavePacket = true;
                     %obj.sendPacket(obj.PacketStore); debug 
                     %obj.PacketStore = 0; % clear packetstore debug
@@ -51,6 +65,7 @@ classdef Node_H < handle
                     str = [obj.NodeID, ' waiting ', '.'];
                     disp(str);
                 end
+                obj.HavePacket = true;
                 
             else
                 obj.timer1 = 0;
@@ -60,38 +75,73 @@ classdef Node_H < handle
         
         function obj = receivePacket(obj, Packet)
                         
-            if (Packet.Type == 0)
-                str = [obj.NodeID, ' Received ACK Packet -----'];
-                disp(str);
-                disp(Packet);
-            elseif (Packet.Type == 1)
-                str = [obj.NodeID, ' Received an Un/Encoded Packet -----'];
-                disp(str);
-                %disp(Packet);    
-            elseif(Packet.Type == 2)
-                str = [obj.NodeID, ' Received Checksum Packet -----'];
-                disp(str);
-                %disp(Packet); %debug
+            if (Packet.Type ==99)
+            
             else
-                str = [obj.NodeID, ' Received Unknown Packet Type !!!!!'];
-                disp(str);
-                disp(Packet);
-            end
+                if (Packet.Type == 0)
+                    str = [obj.NodeID, ' Received ACK Packet -----'];
+                    disp(str);
+                    disp(Packet);
+                    obj.ACK = true;
+                    obj.ACKQueue.enqueue(Packet);
+                    obj.ACKPacketRCounter = obj.ACKPacketRCounter +1;
+                    
+                else
+                    if (Packet.Type == 1)
+                        str = [obj.NodeID, ' Received an Un/Encoded Packet -----'];
+                        disp(str);
+                        %disp(Packet);    
+                    elseif(Packet.Type == 2)
+                        str = [obj.NodeID, ' Received Checksum Packet -----'];
+                        disp(str);
+                        %disp(Packet); %debug
+                    else
+                        str = [obj.NodeID, ' Received Unknown Packet Type !!!!!'];
+                        disp(str);
+                        disp(Packet);
+                    end
 
-            obj.queueUnVer.enqueue(Packet);
-            obj.HavePacket = true;
-            
-            %obj.PacketStore = Packet;% store 1 packet - debug
-            %obj.timer1Active = true;
-            
+                    if (obj.queueUnVer.isFull() == false) 
+                        % if queue is not full enqueue
+                        obj.queueUnVer.enqueue(Packet);
+                        obj.packetRCounter = obj.packetRCounter + 1;
+                    else
+                        % is queue id full drop packet
+                        str =[obj.NodeID , 'Queue was full and packet was dropped ddddddddddddddddddddddddddddddddddddddd'];
+                        disp(str);
+                        obj.droppedPacketCounter = obj.droppedPacketCounter + 1;
+                    end
+
+                    obj.timer1Active = true;
+              
+                end
+                %obj.HavePacket = true;
+                %obj.PacketStore = Packet;% store 1 packet - debug
+            end
         end
         
         function sPacket = sendPacket(obj)
-            pakkieNode = obj.queueUnVer.dequeue();
+            %if (obj.delayT == false)
+            %    sPacket = struct('Type', 99);
+            %else
+            pakkieNode = obj.OUTQueue.dequeue();
             sPacket = pakkieNode.data;
             str = [obj.NodeID, ' sending packet >>>>>'];
             disp(str);
             obj.HavePacket = false;
+            obj.packetSCounter = obj.packetSCounter + 1;
+            %end
+        end
+        
+        function sPacket = sendACKPacket(obj)
+            
+            pakkieNode = obj.ACKQueue.dequeue();
+            sPacket = pakkieNode.data;
+            str = [obj.NodeID, ' sending ACK packet >>>>>'];
+            disp(str);
+            obj.ACK = false;
+            obj.ACKPacketSCounter = obj.ACKPacketSCounter + 1;
+            
         end
         
     end

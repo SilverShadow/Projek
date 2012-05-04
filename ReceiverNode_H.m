@@ -12,7 +12,10 @@ classdef ReceiverNode_H < handle
      counter = 1;          % packet counter
      currentGen = 1;       % generation being collected and decoded
      ACK = false;
-
+     packetCounter = 0;
+     relGenPacketCounter = 0;
+     NonrelGenPacketCounter = 0;
+     LinDepPacketsCounter = 0;
 
     end
     
@@ -28,57 +31,80 @@ classdef ReceiverNode_H < handle
     
         function obj = receivePacket(obj, Packet)
             
-            if (Packet.GenID == obj.currentGen)
-               
-                if (Packet.Type == 0)
-                    str = [obj.NodeID, ' Received ACK Packet -----'];
-                    disp(str);
-                    disp(Packet);
-                elseif(Packet.Type == 1)
-                    str = [obj.NodeID, ' Received Un/Encoded Packet -----'];
-                    disp(str);
-                    %disp(Packet); %debug
-                    
-                    if ( obj.counter < obj.generationSize )
-                        
-                        %put in decode matrix
-                        str = [obj.NodeID, ' Putting into Decoding Matrix'];
-                        disp(str); 
-                        obj.CodeVectorMatrix_gf(obj.counter, :) = Packet.CodeVector_c;
-                        obj.CodedPacketMatrix_gf(:, obj.counter) = Packet.CodedData_e;
-                        obj.counter = obj.counter +1;
-
-                    elseif( obj.counter == obj.generationSize )
-                        
-                        %put in decode matrix
-                        str = [obj.NodeID, ' Putting into Decoding Matrix'];
-                        disp(str);  
-                        obj.CodeVectorMatrix_gf(obj.counter, :) = Packet.CodeVector_c;
-                        obj.CodedPacketMatrix_gf(:, obj.counter) = Packet.CodedData_e;
-
-                        str2 = [obj.NodeID,' Ack packet = true']; 
-                        disp(str2); 
-                        obj.ACK = true;
-
-                        % decode generation
-                        obj.decodeGen();
-
-                        obj.currentGen = obj.currentGen + 1;
-                    end
-                   
-                elseif(Packet.Type == 2)
-                    str = [obj.NodeID, ' Received Checksum Packet -----'];
-                    disp(str);
-                    disp(Packet);
-                else
-                    str = [obj.NodeID, ' Received Unknown Packet Type !!!!!'];
-                    disp(str);
-                    disp(Packet);
-                end
-                
+            if(Packet.Type == 99)
             else
-                str = [obj.NodeID, ' not current gen packet'];
-                disp(str);
+                obj.packetCounter = obj.packetCounter + 1;
+                
+                if (Packet.GenID == obj.currentGen)
+                    
+                    obj.relGenPacketCounter = obj.relGenPacketCounter + 1;
+                    
+                    if (Packet.Type == 0)
+                        str = [obj.NodeID, ' Received ACK Packet -----'];
+                        disp(str);
+                        disp(Packet);
+                        
+                    elseif(Packet.Type == 1)
+                        str = [obj.NodeID, ' Received Un/Encoded Packet -----'];
+                        disp(str);
+                        %disp(Packet); %debug
+
+                        if ( obj.counter < obj.generationSize )
+
+                            %put in decode matrix
+                            str = [obj.NodeID, ' Putting into Decoding Matrix'];
+                            disp(str); 
+                            obj.CodeVectorMatrix_gf(obj.counter, :) = Packet.CodeVector_c;
+                            if (rank(obj.CodeVectorMatrix_gf) == obj.counter)
+                                
+                            obj.CodedPacketMatrix_gf(:, obj.counter) = Packet.CodedData_e;
+                            obj.counter = obj.counter +1;
+                            else
+                                disp('packet not linearly independant');
+                                obj.LinDepPacketsCounter = obj.LinDepPacketsCounter +1;
+                            end
+
+                        elseif( obj.counter == obj.generationSize )
+
+                            %put in decode matrix
+                            str = [obj.NodeID, ' Putting into Decoding Matrix'];
+                            disp(str);  
+                            obj.CodeVectorMatrix_gf(obj.counter, :) = Packet.CodeVector_c;
+                            if (rank(obj.CodeVectorMatrix_gf) == obj.counter)
+                                
+                            obj.CodedPacketMatrix_gf(:, obj.counter) = Packet.CodedData_e;
+
+                            str2 = [obj.NodeID,' Ack packet = true']; 
+                            disp(str2); 
+                            obj.ACK = true;
+
+                            % decode generation
+                            obj.decodeGen();
+
+                            obj.currentGen = obj.currentGen + 1;
+                            else
+                                disp('packet not linearly independant');
+                                obj.LinDepPacketsCounter = obj.LinDepPacketsCounter +1;
+                            end
+                            
+                        end
+
+                    elseif(Packet.Type == 2)
+                        str = [obj.NodeID, ' Received Checksum Packet -----'];
+                        disp(str);
+                        disp(Packet);
+                        
+                    else
+                        str = [obj.NodeID, ' Received Unknown Packet Type !!!!!'];
+                        disp(str);
+                        disp(Packet);
+                    end
+
+                else
+                    str = [obj.NodeID, ' not current gen packet'];
+                    disp(str);
+                    obj.NonrelGenPacketCounter = obj.NonrelGenPacketCounter + 1;
+                end
             end
         end
     

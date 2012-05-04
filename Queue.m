@@ -86,6 +86,13 @@ classdef Queue<handle
             link=queue.link;
         end
                
+        function tf = isFull(queue)
+            if(queue.counter < queue.capacity)
+                tf = false;
+            else
+                tf = true;
+            end 
+        end
     end
     
 end
